@@ -597,6 +597,7 @@ Partial Class F_Main
         '
         'C_EnableLog
         '
+        Me.C_EnableLog.Checked = True
         Me.C_EnableLog.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.C_EnableLog.AutoSize = True
         Me.C_EnableLog.Location = New System.Drawing.Point(910, 511)
@@ -691,5 +692,9 @@ Partial Class F_Main
     Friend WithEvents L_Motion_Delay As System.Windows.Forms.Label
     Friend WithEvents L_Filterbez As System.Windows.Forms.Label
     Friend WithEvents T_Filter_Max As System.Windows.Forms.TextBox
+
+
+
+
 
 End Class

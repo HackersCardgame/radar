@@ -37,6 +37,10 @@
 '* -Keine Änderungen. Änderung nur an der Firmware
 '****************************************************************
 
+Imports System
+Imports System.IO
+
+
 Public Class F_Main
     Private Sub F_Main_FormClosing(sender As Object, e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
         Try
@@ -159,6 +163,11 @@ Public Class F_Main
 
                                     If C_EnableLog.Checked = True Then                                  'Prüfen ob Log an ist
                                         F_Log.T_Log.Text = F_Log.T_Log.Text & My.Computer.Clock.LocalTime & " " & L_Speed.Text & vbCrLf     'Wert dokumentieren
+                                        ''MessageBox.Show("You are in the Form.Shown event.")
+                                        Using sw As StreamWriter = File.AppendText("logfile.txt")
+                                            sw.WriteLine(F_Log.T_Log.Text)
+
+                                        End Using
                                     End If
 
                                     Chart1.Series(0).Points(Maxvalue_I).MarkerSize = 15 'Markergröße definieren
@@ -189,6 +198,7 @@ Public Class F_Main
 
                             If C_EnableLog.Checked = True Then                                  'Prüfen ob Log an ist
                                 F_Log.T_Log.Text = F_Log.T_Log.Text & My.Computer.Clock.LocalTime & " " & L_Speed.Text & vbCrLf     'Wert dokumentieren
+
                             End If
 
 
@@ -651,4 +661,8 @@ Public Class F_Main
             T_Filter_Max.Text = 1024
         End If
     End Sub
+
+
+
+
 End Class

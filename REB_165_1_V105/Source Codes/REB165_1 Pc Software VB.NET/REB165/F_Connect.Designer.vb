@@ -221,7 +221,10 @@ Partial Class F_Connect
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
+
     End Sub
+
+
     Friend WithEvents F_Connection As System.Windows.Forms.GroupBox
     Friend WithEvents C_Connect As System.Windows.Forms.Button
     Friend WithEvents L_Comport As System.Windows.Forms.Label
@@ -236,4 +239,16 @@ Partial Class F_Connect
     Friend WithEvents L_Info2 As System.Windows.Forms.Label
     Friend WithEvents L_Info3 As System.Windows.Forms.Label
     Friend WithEvents L_Version As System.Windows.Forms.Label
+
+    Private Sub Form1_Shown(sender As Object, e As EventArgs) _
+     Handles Me.Shown
+
+        ''MessageBox.Show("You are in the Form.Shown event.")
+        C_SearchCom.PerformClick()
+
+
+    End Sub
+
 End Class
+
+
