@@ -1,0 +1,222 @@
+﻿/* This is used in ROHS Page to define Text color of few messages*/
+/*
+.field-validation-error {
+    color: #e80c4d;
+    font-weight: bold;
+}
+
+.field-validation-success {
+    color: green;
+    font-weight: bold;
+}*/
+
+/************My Custom CSS**********************/
+/*Used on DevicePrint page under MCHP logo*/
+hr.dotted {
+    background: none;
+    margin: 0 0 .5em 0;
+    padding: 0;
+    height: 1px;
+    border-bottom: dotted 1px #CFCFCF;
+}
+
+section .header .title {
+    background: #d4d4d5;
+    color: red; /* #383739; */
+    padding: 0 10px;
+    cursor: pointer;
+    align-content: center;
+}
+
+/*
+section .table-5cols div:first-child {
+    width: 41%;
+}*/
+
+/*User agent browser is adding <strong> automatically at some places*/
+strong {
+    font-weight: normal;
+}
+
+/*Its hack to not allow empty div elements to float left*/
+/*.table-6cols :after {
+    content: '.';
+    visibility: hidden;
+}*/
+
+
+/*This is created to give section headers without table class
+Used:ProductPages in DevToolSpecificationPrintView
+*/
+.SectionTitle {
+    color: #ee2a24;
+    font-size: 25px;
+    border-bottom: none;
+}
+/*Used in Documents scetion for KendoToolTip*/
+.k-tooltip.k-popup {
+    margin-top: -3px;
+}
+/* used to display Inactive products in Stage Environment */
+.alertbox
+{
+    background: #d4d4d5;
+    color: #383739;    
+    padding: 0.8em;        
+}
+
+/*This is used in ROHS Page for static content converted in DIV*/
+
+section .table-3cols {
+    width: 100%;
+}
+
+    section .table-3cols > div {
+        width: 100% !important;
+        border-bottom: solid 1px #d4d4d5;
+    }
+
+        section .table-3cols > div:first-child {
+            color: #ee2a24;
+            font-weight: 500;
+        }
+
+        section .table-3cols > div:after {
+            content: '\00a0';
+            clear: both;
+        }
+
+    section .table-3cols div {
+        width: 10%;
+        float: left;
+        border-right: none;
+    }
+
+        section .table-3cols div:first-child {
+            width: 47%;
+        }
+
+        section .table-3cols div:nth-child(2) {
+            width: 27%;
+        }
+
+ .imagegreystar
+    {
+        background: url('../Images/fav-starsgrey.png') no-repeat center right;
+     display: inline-block;
+     width: 18px;
+     height: 18px;
+      outline:none;
+     text-indent: -9999px;
+      position: relative;
+      margin-top: 1px;
+     text-decoration:none;
+
+     }
+     .imageyellowstar
+    {
+        background: url('../Images/fav-stars.png') no-repeat center right;
+     display: inline-block;
+     width: 18px;
+     height: 18px;
+     text-indent: -9999px;
+     position: relative;
+     outline:none;
+     margin-top: 1px;
+     text-decoration:none;
+    }
+
+     .imagegreystarheading
+    {
+        background: url('../Images/fav-starsgrey.png') no-repeat center right;
+     display: inline-block;
+      width: 19px;
+     height: 30px;
+      outline:none;
+     text-indent: -9999px;
+      position: relative;
+      margin-top: 1px;
+     text-decoration:none;
+
+     }
+     .imageyellowstarheading
+    {
+        background: url('../Images/fav-stars.png') no-repeat center right;
+     display: inline-block;
+      width: 18px;
+     height: 30px;
+      outline:none;
+     text-indent: -9999px;
+      position: relative;
+      margin-top: 1px;
+     text-decoration:none;
+    }
+#toolTipmsg {
+    width:64px;
+    height:64px
+}
+
+.cartButtonCursor{
+    cursor:pointer
+}
+
+.float-right{
+    float:right;
+}
+
+.image_height{
+    height:100px;
+    width: 100%;
+}
+
+/*classes for styles which were inline initially*/
+.display-block{
+    display:block !important;
+}
+
+.display-none{
+    display:none !important;
+}
+
+.empty-rohs{
+    width:380px !important;
+}
+
+.devtool-padded{
+    padding-left:30px !important;
+}
+
+.devtool-msg{
+    color:red !important;
+}
+
+/* bootstrap-grid.css - added -15px margin left and right both of all div.row elements, 
+   which impacts softhard gate, add to fav and secure download related kendo popup styles hence overriding*/
+.k-window-content.row {    
+    margin-right: 0px;
+    margin-left: 0px;
+}
+
+@media (min-width: 1021px) {
+    header > .container .viewcart-wrapper {
+        margin-right: 10px;
+        float: right;
+        margin-top: 13px;
+    }
+}
+
+@media (max-width: 450px) {
+    header > .container .viewcart-wrapper {
+        float: right;
+        margin-top: -9px;
+        font-size: 17px;
+    }
+}
+@media (min-width: 767px) {
+
+   header > .container .viewcart-wrapper {
+        float: right;
+        margin-right: -3px;
+        margin-top: 12px;
+    }
+}

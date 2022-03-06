@@ -1,0 +1,308 @@
+;-----------------------------------------------------------------------------;
+; Fixed-point FFT routines for megaAVRs                        (C)ChaN, 2005
+;-----------------------------------------------------------------------------;
+;
+; void fft_input (const int16_t *array_src, complex_t *array_bfly);
+; void fft_execute (complex_t *array_bfly);
+; void fft_output (complex_t *array_bfly, uint16_t *array_dst);
+;
+;  <array_src>: Wave form to be processed.
+;  <array_bfly>: Complex array for butterfly operations.
+;  <array_dst>: Spectrum output buffer.
+;
+; These functions must be called in sequence to do a DFT in FFT algorithm.
+; fft_input() fills the complex array with a wave form to prepare butterfly
+; operations. A hamming window is applied at the same time.
+; fft_execute() executes the butterfly operations.
+; fft_output() re-orders the results, converts the complex spectrum into
+; scalar spectrum and output it in linear scale.
+;
+; The number of points FFT_N is defined in "ffft.h" and the value can be
+; power of 2 in range of 64 - 1024.
+;
+;----------------------------------------------------------------------------;
+; 16bit fixed-point FFT performance with MegaAVRs
+; (Running at 16MHz/internal SRAM)
+;
+;  Points:   Input, Execute,  Output,    Total:  Throughput
+;   64pts:   .17ms,   2.0ms,   1.2ms,    3.4ms:   19.0kpps
+;  128pts:   .33ms,   4.6ms,   2.4ms,    7.3ms:   17.5kpps
+;  256pts:   .66ms,  10.4ms,   4.9ms,   15.9ms:   16.1kpps
+;  512pts:   1.3ms,  23.2ms,   9.7ms,   34.2ms:   14.9kpps
+; 1024pts:   2.7ms,  51.7ms,  19.4ms,   73.7ms:   13.9kpps
+;----------------------------------------------------------------------------;
+
+
+.nolist
+#define FFFT_ASM
+#include "ffft.h"
+.list
+
+#define FFT_B_256 8
+
+;----------------------------------------------------------------------------;
+; Constant Tables
+
+.global tbl_window_256
+tbl_window_256:	; tbl_window[] = ... (This is a Hamming window)
+#if FFT_N_256 == 256
+	.dc.w	2621, 2625, 2639, 2662, 2693, 2734, 2784, 2843, 2910, 2987, 3073, 3167, 3270, 3382, 3502, 3631
+	.dc.w	3768, 3914, 4068, 4230, 4401, 4579, 4765, 4959, 5161, 5370, 5587, 5811, 6042, 6280, 6525, 6777
+	.dc.w	7036, 7300, 7571, 7849, 8132, 8420, 8715, 9015, 9320, 9630, 9945, 10264, 10588, 10917, 11249, 11586
+	.dc.w	11926, 12269, 12616, 12966, 13318, 13674, 14031, 14391, 14753, 15117, 15482, 15849, 16216, 16585, 16954, 17324
+	.dc.w	17694, 18064, 18433, 18802, 19171, 19539, 19905, 20271, 20634, 20996, 21356, 21714, 22069, 22422, 22772, 23118
+	.dc.w	23462, 23802, 24138, 24471, 24799, 25123, 25443, 25758, 26068, 26373, 26673, 26967, 27256, 27539, 27816, 28087
+	.dc.w	28352, 28610, 28862, 29107, 29345, 29576, 29800, 30017, 30226, 30428, 30622, 30808, 30987, 31157, 31319, 31473
+	.dc.w	31619, 31756, 31885, 32006, 32117, 32220, 32315, 32400, 32477, 32545, 32603, 32653, 32694, 32726, 32748, 32762
+	.dc.w	32766, 32762, 32748, 32726, 32694, 32653, 32603, 32545, 32477, 32400, 32315, 32221, 32117, 32006, 31885, 31757
+	.dc.w	31619, 31473, 31319, 31157, 30987, 30808, 30622, 30428, 30226, 30017, 29800, 29576, 29345, 29107, 28862, 28610
+	.dc.w	28352, 28087, 27816, 27539, 27256, 26967, 26673, 26373, 26068, 25758, 25443, 25123, 24799, 24471, 24138, 23802
+	.dc.w	23462, 23118, 22772, 22422, 22069, 21714, 21356, 20996, 20634, 20271, 19905, 19539, 19171, 18803, 18433, 18064
+	.dc.w	17694, 17324, 16954, 16585, 16216, 15849, 15482, 15117, 14753, 14391, 14031, 13674, 13318, 12966, 12616, 12269
+	.dc.w	11926, 11586, 11249, 10917, 10588, 10264, 9945, 9630, 9320, 9015, 8715, 8420, 8132, 7849, 7571, 7300
+	.dc.w	7036, 6777, 6526, 6280, 6042, 5811, 5587, 5370, 5161, 4959, 4765, 4579, 4401, 4230, 4068, 3914
+	.dc.w	3768, 3631, 3502, 3382, 3270, 3167, 3073, 2987, 2910, 2843, 2784, 2734, 2693, 2662, 2639, 2625
+#endif
+
+
+tbl_cos_sin:	; Table of {cos(x),sin(x)}, (0 <= x < pi, in FFT_N/2 steps)
+#if FFT_N_256 == 256
+	.dc.w	32767, 0, 32757, 804, 32727, 1607, 32678, 2410, 32609, 3211, 32520, 4011, 32412, 4807, 32284, 5601
+	.dc.w	32137, 6392, 31970, 7179, 31785, 7961, 31580, 8739, 31356, 9511, 31113, 10278, 30851, 11038, 30571, 11792
+	.dc.w	30272, 12539, 29955, 13278, 29621, 14009, 29268, 14732, 28897, 15446, 28510, 16150, 28105, 16845, 27683, 17530
+	.dc.w	27244, 18204, 26789, 18867, 26318, 19519, 25831, 20159, 25329, 20787, 24811, 21402, 24278, 22004, 23731, 22594
+	.dc.w	23169, 23169, 22594, 23731, 22004, 24278, 21402, 24811, 20787, 25329, 20159, 25831, 19519, 26318, 18867, 26789
+	.dc.w	18204, 27244, 17530, 27683, 16845, 28105, 16150, 28510, 15446, 28897, 14732, 29268, 14009, 29621, 13278, 29955
+	.dc.w	12539, 30272, 11792, 30571, 11038, 30851, 10278, 31113, 9511, 31356, 8739, 31580, 7961, 31785, 7179, 31970
+	.dc.w	6392, 32137, 5601, 32284, 4807, 32412, 4011, 32520, 3211, 32609, 2410, 32678, 1607, 32727, 804, 32757
+	.dc.w	0, 32766, -804, 32757, -1607, 32727, -2410, 32678, -3211, 32609, -4010, 32520, -4807, 32412, -5601, 32284
+	.dc.w	-6392, 32137, -7179, 31970, -7961, 31785, -8739, 31580, -9511, 31356, -10278, 31113, -11038, 30851, -11792, 30571
+	.dc.w	-12539, 30272, -13278, 29955, -14009, 29621, -14732, 29268, -15446, 28897, -16150, 28510, -16845, 28105, -17530, 27683
+	.dc.w	-18204, 27244, -18867, 26789, -19519, 26318, -20159, 25831, -20787, 25329, -21402, 24811, -22004, 24278, -22594, 23731
+	.dc.w	-23169, 23169, -23731, 22594, -24278, 22005, -24811, 21402, -25329, 20787, -25831, 20159, -26318, 19519, -26789, 18867
+	.dc.w	-27244, 18204, -27683, 17530, -28105, 16845, -28510, 16150, -28897, 15446, -29268, 14732, -29620, 14009, -29955, 13278
+	.dc.w	-30272, 12539, -30571, 11792, -30851, 11038, -31113, 10278, -31356, 9511, -31580, 8739, -31784, 7961, -31970, 7179
+	.dc.w	-32137, 6392, -32284, 5601, -32412, 4807, -32520, 4011, -32609, 3211, -32678, 2410, -32727, 1607, -32757, 804
+#endif
+
+
+
+tbl_bitrev:		; tbl_bitrev[] = ...
+#if FFT_N_256 == 256
+#ifdef INPUT_IQ
+	.dc.w	1*4, 129*4, 65*4, 193*4, 33*4, 161*4, 97*4, 225*4, 17*4, 145*4, 81*4, 209*4, 49*4, 177*4, 113*4, 241*4
+	.dc.w	9*4, 137*4, 73*4, 201*4, 41*4, 169*4, 105*4, 233*4, 25*4, 153*4, 89*4, 217*4, 57*4, 185*4, 121*4, 249*4
+	.dc.w	5*4, 133*4, 69*4, 197*4, 37*4, 165*4, 101*4, 229*4, 21*4, 149*4, 85*4, 213*4, 53*4, 181*4, 117*4, 245*4
+	.dc.w	13*4, 141*4, 77*4, 205*4, 45*4, 173*4, 109*4, 237*4, 29*4, 157*4, 93*4, 221*4, 61*4, 189*4, 125*4, 253*4
+	.dc.w	3*4, 131*4, 67*4, 195*4, 35*4, 163*4, 99*4, 227*4, 19*4, 147*4, 83*4, 211*4, 51*4, 179*4, 115*4, 243*4
+	.dc.w	11*4, 139*4, 75*4, 203*4, 43*4, 171*4, 107*4, 235*4, 27*4, 155*4, 91*4, 219*4, 59*4, 187*4, 123*4, 251*4
+	.dc.w	7*4, 135*4, 71*4, 199*4, 39*4, 167*4, 103*4, 231*4, 23*4, 151*4, 87*4, 215*4, 55*4, 183*4, 119*4, 247*4
+	.dc.w	15*4, 143*4, 79*4, 207*4, 47*4, 175*4, 111*4, 239*4, 31*4, 159*4, 95*4, 223*4, 63*4, 191*4, 127*4, 255*4
+#endif
+	.dc.w	0*4, 128*4, 64*4, 192*4, 32*4, 160*4, 96*4, 224*4, 16*4, 144*4, 80*4, 208*4, 48*4, 176*4, 112*4, 240*4
+	.dc.w	8*4, 136*4, 72*4, 200*4, 40*4, 168*4, 104*4, 232*4, 24*4, 152*4, 88*4, 216*4, 56*4, 184*4, 120*4, 248*4
+	.dc.w	4*4, 132*4, 68*4, 196*4, 36*4, 164*4, 100*4, 228*4, 20*4, 148*4, 84*4, 212*4, 52*4, 180*4, 116*4, 244*4
+	.dc.w	12*4, 140*4, 76*4, 204*4, 44*4, 172*4, 108*4, 236*4, 28*4, 156*4, 92*4, 220*4, 60*4, 188*4, 124*4, 252*4
+	.dc.w	2*4, 130*4, 66*4, 194*4, 34*4, 162*4, 98*4, 226*4, 18*4, 146*4, 82*4, 210*4, 50*4, 178*4, 114*4, 242*4
+	.dc.w	10*4, 138*4, 74*4, 202*4, 42*4, 170*4, 106*4, 234*4, 26*4, 154*4, 90*4, 218*4, 58*4, 186*4, 122*4, 250*4
+	.dc.w	6*4, 134*4, 70*4, 198*4, 38*4, 166*4, 102*4, 230*4, 22*4, 150*4, 86*4, 214*4, 54*4, 182*4, 118*4, 246*4
+	.dc.w	14*4, 142*4, 78*4, 206*4, 46*4, 174*4, 110*4, 238*4, 30*4, 158*4, 94*4, 222*4, 62*4, 190*4, 126*4, 254*4
+#endif
+
+
+
+;----------------------------------------------------------------------------;
+#ifndef INPUT_NOISE
+.global fft_input_256
+.func fft_input_256
+fft_input_256:
+	pushw	T2H,T2L
+	pushw	AH,AL
+	pushw	YH,YL
+
+	movw	XL, EL				;X = array_src;
+	movw	YL, DL				;Y = array_bfly;
+	clr	EH				;Zero
+	ldiw	ZH,ZL, tbl_window_256		;Z = &tbl_window[0];
+	ldiw	AH,AL, FFT_N_256			;A = FFT_N;
+1:	lpmw	BH,BL, Z+			;B = *Z++; (window)
+	ldw	CH,CL, X+			;C = *X++; (I-axis)
+	FMULS16	DH,DL,T2H,T2L, BH,BL, CH,CL	;D = B * C;
+	stw	Y+, DH,DL			;*Y++ = D;
+#ifdef INPUT_IQ
+	ldw	CH,CL, X+			;C = *X++; (Q-axis)
+	FMULS16	DH,DL,T2H,T2L, BH,BL, CH,CL	;D = B * C;
+#endif
+	stw	Y+, DH,DL			;*Y++ = D;
+	subiw	AH,AL, 1			;while(--A)
+	brne	1b				;/
+
+	popw	YH,YL
+	popw	AH,AL
+	popw	T2H,T2L
+	clr	r1
+	ret
+.endfunc
+#endif	/* INPUT_NOISE */
+
+
+
+;----------------------------------------------------------------------------;
+.global fft_execute_256
+.func fft_execute_256
+fft_execute_256:
+	pushw	T2H,T2L
+	pushw	T4H,T4L
+	pushw	T6H,T6L
+	pushw	T8H,T8L
+	pushw	T10H,T10L
+	pushw	T12H,T12L
+	pushw	T14H,T14L
+	pushw	AH,AL
+	pushw	YH,YL
+
+	movw	ZL, EL				;Z = array_bfly;
+	ldiw	EH,EL, 1			;E = 1;
+	ldiw	XH,XL, FFT_N_256/2			;X = FFT_N/2;
+1:	ldi	AL, 4				;T12 = E; (angular speed)
+	mul	EL, AL				;
+	movw	T12L, T0L			;
+	mul	EH, AL				;
+	add	T12H, T0L			;/
+	movw	T14L, EL			;T14 = E;
+	pushw	EH,EL
+	movw	YL, ZL				;Z = &array_bfly[0];
+	mul	XL, AL				;Y = &array_bfly[X];
+	addw	YH,YL, T0H,T0L			;
+	mul	XH, AL				;
+	add	YH, T0L				;/
+	pushw	ZH,ZL
+2:	clrw	T10H,T10L			;T10 = 0 (angle)
+	clr	EH				;Zero reg.
+3:	lddw	AH,AL, Z+0			;A = *Z - *Y; *Z++ += *Y;
+	asrw	AH,AL				;
+	lddw	DH,DL, Y+0			;
+	asrw	DH,DL				;
+	movw	CL, AL				;
+	subw	AH,AL, DH,DL			;
+	addw	CH,CL, DH,DL			;
+	stw	Z+, CH,CL			;/
+	lddw	BH,BL, Z+0			;B = *Z - *Y; *Z++ += *Y;
+	asrw	BH,BL				;
+	lddw	DH,DL, Y+2			;
+	asrw	DH,DL				;
+	movw	CL, BL				;
+	subw	BH,BL, DH,DL			;
+	addw	CH,CL, DH,DL			;
+	stw	Z+, CH,CL			;/
+	movw	T0L, ZL
+	ldiw	ZH,ZL, tbl_cos_sin		;C = cos(T10); D = sin(T10);
+	addw	ZH,ZL, T10H,T10L		;
+	lpmw	CH,CL, Z+			;
+	lpmw	DH,DL, Z+			;/
+	movw	ZL, T0L
+	FMULS16	T4H,T4L,T2H,T2L, AH,AL, CH,CL	;*Y++ = A * C + B * D;
+	FMULS16	T8H,T8L,T6H,T6L, BH,BL, DH,DL	;
+	addd	T4H,T4L,T2H,T2L, T8H,T8L,T6H,T6L;
+	stw	Y+, T4H,T4L			;/
+	FMULS16	T4H,T4L,T2H,T2L, BH,BL, CH,CL 	;*Y++ = B * C - A * D;
+	FMULS16	T8H,T8L,T6H,T6L, AH,AL, DH,DL 	;
+	subd	T4H,T4L,T2H,T2L, T8H,T8L,T6H,T6L;
+	stw	Y+, T4H,T4L			;/
+	addw	T10H,T10L, T12H,T12L		;T10 += T12; (next angle)
+#if FFT_N_256 >= 128
+	sbrs	T10H, FFT_B_256 - 7			;while(T10 < pi)
+#else
+	sbrs	T10L, FFT_B_256 + 1
+#endif
+	rjmp	3b				;/
+	ldi	AL, 4				;Y += X; Z += X; (skip split segment)
+	mul	XL, AL
+	addw	YH,YL, T0H,T0L			;
+	addw	ZH,ZL, T0H,T0L			;
+	mul	XH, AL				;
+	add	YH, T0L				;
+	add	ZH, T0L				;/
+	ldi	EL, 1				;while(--T14)
+	subw	T14H,T14L, EH,EL		;
+	rjne	2b				;/
+	popw	ZH,ZL
+	popw	EH,EL
+	lslw	EH,EL				;E *= 2;
+	lsrw	XH,XL				;while(X /= 2)
+	adiw	XL, 0				;
+	rjne	1b				;/
+
+	popw	YH,YL
+	popw	AH,AL
+	popw	T14H,T14L
+	popw	T12H,T12L
+	popw	T10H,T10L
+	popw	T8H,T8L
+	popw	T6H,T6L
+	popw	T4H,T4L
+	popw	T2H,T2L
+;	clr	r1
+	ret
+.endfunc
+
+
+
+;----------------------------------------------------------------------------;
+.global fft_output_256
+.func fft_output_256
+fft_output_256:
+	pushw	T2H,T2L
+	pushw	T4H,T4L
+	pushw	T6H,T6L
+	pushw	T8H,T8L
+	pushw	T10H,T10L
+	pushw	AH,AL
+	pushw	YH,YL
+
+	movw	T10L, EL			;T10 = array_bfly;
+	movw	YL, DL				;Y = array_output;
+	ldiw	ZH,ZL, tbl_bitrev		;Z = tbl_bitrev;
+	clr	EH				;Zero
+#ifdef INPUT_IQ
+	ldiw	AH,AL, FFT_N_256			;A = FFT_N; (plus/minus)
+#else
+	ldiw	AH,AL, FFT_N_256 / 2		;A = FFT_N / 2; (plus only)
+#endif
+1:	lpmw	XH,XL, Z+			;X = *Z++;
+	addw	XH,XL, T10H,T10L		;X += array_bfly;
+	ldw	BH,BL, X+			;B = *X++;
+	ldw	CH,CL, X+			;C = *X++;
+	FMULS16	T4H,T4L,T2H,T2L, BH,BL, BH,BL	;T4:T2 = B * B;
+	FMULS16	T8H,T8L,T6H,T6L, CH,CL, CH,CL	;T8:T6 = C * C;
+	addd	T4H,T4L,T2H,T2L, T8H,T8L,T6H,T6L;T4:T2 += T8:T6;
+	SQRT32					;B = sqrt(T4:T2);
+	stw	Y+, BH,BL			;*Y++ = B;
+	subiw	AH,AL, 1			;while(--A)
+	rjne	1b				;/
+
+	popw	YH,YL
+	popw	AH,AL
+	popw	T10H,T10L
+	popw	T8H,T8L
+	popw	T6H,T6L
+	popw	T4H,T4L
+	popw	T2H,T2L
+	clr	r1
+	ret
+.endfunc
+
+
+
+;----------------------------------------------------------------------------;
+.global fmuls_f_256
+.func fmuls_f_256
+fmuls_f_256:
+	movw	CL, EL				;C = E;
+	clr	EH	;Zero
+	FMULS16	ZH,ZL,XH,XL, CH,CL, DH,DL	;Z:X = C * D;
+	movw	EL, ZL
+	clr	r1
+	ret
+.endfunc
+

@@ -1,0 +1,74 @@
+Pc Software
+
+'****************************************************************
+'* Changelog
+'****************************************************************
+'* 17.02.2014
+'* Version: 1.01
+'* -Baudrate programmierbar
+'* -Com-Port und Baudrate Autosuche hinzugefügt
+'* -Mehr Geschwindigkeit durch höhere Baudraten
+'* -km/h Faktor Dezimaltrennzeichen Bug behoben
+'* -X, Y Koordinatenanzeige bei Mouseover hinzugefügt
+'* -Anzeige der Messzeit hinzugefügt
+'* -Geschwindigkeitsfilter hinzugefügt
+'****************************************************************
+'* 01.11.2014
+'* Version: 1.02
+'* -Anpassung auf neue schnellere AVR FFT Routine (ChanFFT)
+'* -Einfrieren beim Minimieren des Fensters behoben
+'* -Weitere Baudraten hinzugefügt
+'* -REB165_1 in REB165 umbenannt
+'* -Überspringen der FFT Berechnung, wenn Datenübertragung unvollständig
+'* -Bootloader Upload Tool Portierung von VB6 auf VB.NET 2010
+'* -EEPROM Erase in Bootloader Upload Tool hinzugefügt
+'****************************************************************
+'* 03.01.2015
+'* Version: 1.03
+'* -Software sendet beim Beenden der Software den Befehl FF an den Controller um den PC Mode in den Offline Motion Detector zu verlassen
+'* -Geschwindigkeitsfilter mit Min und Max Geschwindigkeit implementiert
+'* -Pause(ms) nach erfolgreicher Detektion ab sofort programmierbar (Motion Delay)
+'****************************************************************
+'* 03.04.2017
+'* Version: 1.04
+'* -Neues Logo
+'****************************************************************
+'* 12.04.2017
+'* Version: 1.05
+'* -Keine Änderungen. Änderung nur an der Firmware
+'****************************************************************
+
+Firmware
+
+ ****************************************************************
+ * Changelog
+ ****************************************************************
+ * 17.02.2014
+ * Version: 1.01
+ * -Baudrate programmierbar
+ * -Warnungen beim Kompilieren behoben
+ ****************************************************************
+ * 01.11.2014
+ * Version: 1.02
+ * -Neue schnellere FFT Routine (ChanFFT) implementiert
+ * -pow(2, Samples) Befehl durch 1 << Samples ersetzt, da es Fehler in der Berechnung gab
+ ****************************************************************
+ * 29.12.2014
+ * Version: 1.03
+ * -Fehler in der Anwendung der _delay_ms Routine behoben. F_CPU in Delay Routine ist richtig definiert
+ * -_delay_ms,_delay_us Routine mit Hilfe der Hilfsroutine delay_ms,delay_us nun variabel konfigurierbar
+ * -Offline Motion Detector: Pause(ms) nach erfolgreicher Detektion ab sofort programmierbar
+ * -Offline Motion Detector: Geschwindigkeitsfilter im FFT Mode implementiert
+ * -Neuen Befehl HEX FF zum Verlassen der PC Mode Schleife hinzugefügt
+ ****************************************************************
+ * 22.03.2017
+ * Version: 1.04
+ * -Code optimiert und umstrukturiert
+ * -Projekt Update auf Atmel Studio 7
+ * -Geschwindigkeitsausgabe über USART1 im Offline Motion Detector
+ * -Bugfix: Board nicht mehr ansprechbar, wenn fehlerhafte Werte imm EEPROM stehen
+ ****************************************************************
+ * 11.04.2017
+ * Version: 1.05
+ * -Bugfix: Geschwindigkeitsberechnung mit kmhfaktor
+ ****************************************************************
