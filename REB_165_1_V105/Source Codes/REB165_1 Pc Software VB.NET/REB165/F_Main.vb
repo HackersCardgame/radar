@@ -164,7 +164,7 @@ Public Class F_Main
                                     If C_EnableLog.Checked = True Then                                  'Prüfen ob Log an ist
                                         F_Log.T_Log.Text = F_Log.T_Log.Text & My.Computer.Clock.LocalTime & " " & L_Speed.Text & vbCrLf     'Wert dokumentieren
                                         ''MessageBox.Show("You are in the Form.Shown event.")
-                                        Using sw As StreamWriter = File.AppendText("logfile" & Date.Now.ToString("yyyyMMdd") & ".txt")
+                                        Using sw As StreamWriter = File.AppendText("logfile" & Date.Now.ToString("yyyyMM") & ".txt")
                                             sw.WriteLine(My.Computer.Clock.LocalTime & " " & L_Speed.Text & vbCrLf)
 
                                         End Using
