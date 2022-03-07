@@ -165,7 +165,7 @@ Public Class F_Main
                                         F_Log.T_Log.Text = F_Log.T_Log.Text & My.Computer.Clock.LocalTime & " " & L_Speed.Text & vbCrLf     'Wert dokumentieren
                                         ''MessageBox.Show("You are in the Form.Shown event.")
                                         Using sw As StreamWriter = File.AppendText("logfile" & Date.Now.ToString("yyyyMM") & ".txt")
-                                            sw.WriteLine(My.Computer.Clock.LocalTime & " " & L_Speed.Text & vbCrLf)
+                                            sw.WriteLine(My.Computer.Clock.LocalTime & " " & L_Speed.Text)
 
                                         End Using
                                     End If
